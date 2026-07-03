@@ -86,7 +86,7 @@ python judge.py problems/A+B problems/A+B/A+B.c
 - [x] Core judge loop: run a submission, compare output, report AC/WA/TLE/RE
 - [x] Multiple test cases per problem, discovered automatically, stop-at-first-failure
 - [x] C submission support: compile step, CE detection, stale-binary protection
-- [ ] Refactor: verdicts as return values instead of inline prints, for reuse outside a
+- [x] Refactor: verdicts as return values instead of inline prints, for reuse outside a
       terminal (web UI, logging, etc.)
 - [ ] Real resource limits (CPU time + memory) via a small C runner using `setrlimit` /
       `getrusage`, instead of relying on wall-clock timeouts alone
