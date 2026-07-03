@@ -3,55 +3,52 @@ import os
 from pathlib import Path
 
 def read_file(command, inp):
-    print("about to run:", command)
     try:
         result = subprocess.run(command, input=inp, capture_output=True, text=True, timeout=3)
-        print("finished running")
-        return result.stdout.strip(), result.returncode, False
+        return result.stdout.strip(), result.returncode,result.stderr, False
     except subprocess.TimeoutExpired:
         print("caught timeout")
-        return ("", 0, True)
+        return ("", 0,"", True)
     
 def check_answer(output ,expected, code,i): 
     if code != 0 : 
-        print(f"Erorr on test case {i}")
         return "RE"
     else : 
         if output.strip() == expected.strip() : 
-            print(f"test case {i} : ACCEPTED !")
             return "AC"
         else:
-            print(f"test case {i} : Wrong answer (expected = {expected} , output = {output})")
             return "WA"
 
 
 def check_files(path,script):
     problem_dir = Path(path)
     files = sorted(problem_dir.glob("*.in"))
-    i = 1 
+    i = 0
     if script.suffix == '.c':
         compilation_result = compile_submition(path,script)
         compilation_code , compilation_output ,output_path = compilation_result
         command = [output_path]
         if compilation_code != 0 : 
-            print(f"Compilation error : {compilation_output}")
-            return
+            return "CE",i,compilation_output
     elif script.suffix == '.py' : 
         command = ['python' , script]
     else : 
-        return
+        return ("WL",i,"This judge does not support this language yet ")
+    last_result = ()
     for file in files : 
         with open(file,"r")as inp , open(problem_dir/f"{file.stem}.out") as out :  
+            i+=1
             result = read_file(command,inp.read().strip())
-            output , code , timed_out = result
+            output , code ,system_out, timed_out = result
             if timed_out : 
-                print(f"timeout on test case {i}")
+                last_result = ("TLE",i,system_out)
                 break
             expected = out.read().strip()
             verdict = check_answer(output,expected,code,i)
+            last_result = (verdict,i,system_out)
         if verdict != "AC" :
             break
-        i+=1
+    return last_result
 
 def compile_submition(problem_dir,path) : 
     output_path = f"{problem_dir/ path.stem}.exe"
@@ -67,4 +64,17 @@ def compile_submition(problem_dir,path) :
 if __name__ == "__main__" : 
     p = Path("C:/Users/mohammed/CP judge/basic_judge/A+B")
     s = Path("C:/Users/mohammed/CP judge/basic_judge/A+B/A+B.c")
-    check_files(p,s)
+    verdict , test_case , system_out  = check_files(p,s) # type: ignore
+    if verdict == "AC" : 
+        for i in range(1,test_case+1) : 
+            print(f"Test case {i} : accepted !")
+    elif verdict == "CE" : 
+        print("Compilation error!")
+    elif verdict == "TLE": 
+        print(f"Time limit exceded at test case {test_case}")
+    elif verdict == "WL" : 
+        print(system_out)
+    elif verdict == "RE" :
+        print(f"Runtime error at test case {test_case}")
+    elif verdict == "WA" : 
+        print(f"Wrong answer at test case {test_case}")
