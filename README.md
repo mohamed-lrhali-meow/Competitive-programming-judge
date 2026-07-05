@@ -90,7 +90,7 @@ python judge.py problems/A+B problems/A+B/A+B.c
       terminal (web UI, logging, etc.)
 - [ ] Real resource limits (CPU time + memory) via a small C runner using `setrlimit` /
       `getrusage`, instead of relying on wall-clock timeouts alone
-- [ ] Stress-testing tool: random test generation + brute-force vs. optimized diffing
+- [x] Stress-testing tool: random test generation + brute-force vs. optimized diffing
 - [ ] Special judges for problems with multiple valid answers
 - [ ] Submission history (SQLite)
 - [ ] Minimal web UI (Flask)
