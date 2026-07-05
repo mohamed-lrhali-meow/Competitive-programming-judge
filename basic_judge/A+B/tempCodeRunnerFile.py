@@ -1,1 +1,0 @@
-basic_judge/A+B/

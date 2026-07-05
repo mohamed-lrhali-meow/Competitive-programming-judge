@@ -20,23 +20,23 @@ def check_answer(output ,expected, code,i):
             return "WA"
 
 
-def check_files(path,script):
-    problem_dir = Path(path)
-    files = sorted(problem_dir.glob("*.in"))
+def check_files(submissions_path,problem_name,test_cases,solution_submitted):
+    test_cases_dir = Path(test_cases)
+    files = sorted(test_cases_dir.glob("*.in"))
     i = 0
-    if script.suffix == '.c':
-        compilation_result = compile_submition(path,script)
+    if solution_submitted.suffix == '.c':
+        compilation_result = compile_submition(submissions_path,problem_name)
         compilation_code , compilation_output ,output_path = compilation_result
         command = [output_path]
         if compilation_code != 0 : 
             return "CE",i,compilation_output
-    elif script.suffix == '.py' : 
-        command = ['python' , script]
+    elif solution_submitted.suffix == '.py' : 
+        command = ['python' , solution_submitted]
     else : 
-        return ("WL",i,"This judge does not support this language yet ")
+        return ("WL",i,"")
     last_result = ()
     for file in files : 
-        with open(file,"r")as inp , open(problem_dir/f"{file.stem}.out") as out :  
+        with open(file,"r")as inp , open(test_cases_dir/f"{file.stem}.out") as out :  
             i+=1
             result = read_file(command,inp.read().strip())
             output , code ,system_out, timed_out = result
@@ -50,13 +50,13 @@ def check_files(path,script):
             break
     return last_result
 
-def compile_submition(problem_dir,path) : 
-    output_path = f"{problem_dir/ path.stem}.exe"
+def compile_submition(submissions_path,problem_name) : 
+    output_path = f"{submissions_path/problem_name}.exe"
     try:
         os.remove(output_path)
     except OSError : 
         pass
-    result = subprocess.run(["gcc",path, "-o" ,output_path],capture_output=True,text=True,timeout=10)
+    result = subprocess.run(["gcc",f"{submissions_path/problem_name}.c", "-o" ,output_path],capture_output=True,text=True,timeout=10)
     if result.returncode != 0 :
         return result.returncode,result.stderr,output_path
     else : 
@@ -73,7 +73,7 @@ if __name__ == "__main__" :
     elif verdict == "TLE": 
         print(f"Time limit exceded at test case {test_case}")
     elif verdict == "WL" : 
-        print(system_out)
+        print("This judge does not support this language yet!")
     elif verdict == "RE" :
         print(f"Runtime error at test case {test_case}")
     elif verdict == "WA" : 
