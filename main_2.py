@@ -20,7 +20,7 @@ def check_answer(output ,expected, code,i):
             return "WA"
     
 def check_files(test_cases,solution_submitted,language):
-    test_cases_dir = Path(test_cases)
+    test_cases_dir = Path(f"{test_cases}/tests")
     files = sorted(test_cases_dir.glob("*.in"))
     i = 0
     if language.lower() == 'c':
@@ -34,19 +34,42 @@ def check_files(test_cases,solution_submitted,language):
     else : 
         return ("WL",i,"")
     last_result = ()
-    for file in files : 
-        with open(file,"r")as inp , open(test_cases_dir/f"{file.stem}.out") as out :  
-            i+=1
-            result = read_file(command,inp.read().strip()) # type: ignore
-            output , code ,system_out, timed_out = result
-            if timed_out : 
-                last_result = ("TLE",i,system_out)
+    checker_path = Path(f"{test_cases}/checker.py")
+    if checker_path.is_file() :
+        for file in files : 
+            with open(file,"r")as inp :  
+                i+=1
+                result = read_file(command,inp.read().strip()) # type: ignore
+                output , code ,system_out, timed_out = result
+                if code != 0 : 
+                    last_result = ("RE",i,system_out)
+                    break
+                if timed_out : 
+                    last_result = ("TLE",i,system_out)
+                    break
+                temp_path = Path(f"{test_cases}/temp_output.txt")
+                temp_path.write_text(output,encoding=None, errors=None, newline=None)
+                checker_result = subprocess.run(["python", checker_path, file, temp_path], capture_output=True, text=True)
+                checker_message , checker_code = checker_result.stdout , checker_result.returncode
+                if checker_code == 0 : 
+                    last_result = ("AC",i,checker_message)
+                else : 
+                    last_result = ("WA" ,i,checker_message)
+                    break
+    else :
+        for file in files : 
+            with open(file,"r")as inp , open(test_cases_dir/f"{file.stem}.out") as out :  
+                i+=1
+                result = read_file(command,inp.read().strip()) # type: ignore
+                output , code ,system_out, timed_out = result
+                if timed_out : 
+                    last_result = ("TLE",i,system_out)
+                    break
+                expected = out.read().strip()
+                verdict = check_answer(output,expected,code,i)
+                last_result = (verdict,i,system_out)
+            if verdict != "AC" :
                 break
-            expected = out.read().strip()
-            verdict = check_answer(output,expected,code,i)
-            last_result = (verdict,i,system_out)
-        if verdict != "AC" :
-            break
     return last_result
 
 def compile_submition(solution_submitted) : 
@@ -61,10 +84,10 @@ def compile_submition(solution_submitted) :
     else : 
         return result.returncode,result.stderr,output_path
 if __name__ == "__main__" : 
-    problem_name = "max_subarray"
+    problem_name = "Two_sum"
     language = "python"
     submissions_path = Path(f"C:/users/mohammed/CP judge/submissions/{problem_name}")
-    test_cases = Path(f"C:/Users/mohammed/CP judge/problems/{problem_name}/tests")
+    test_cases = Path(f"C:/Users/mohammed/CP judge/problems/{problem_name}")
     if language.lower() == "c":
         solution_submitted = Path(submissions_path / f"{problem_name}.c")
     elif language.lower() == "python":
@@ -84,6 +107,6 @@ if __name__ == "__main__" :
     elif verdict == "RE" :
         print(f"Runtime error")
     elif verdict == "WA" : 
-        print(f"Wrong answer at test case {test_case}")
+        print(f"Wrong answer at test case {test_case} \n {system_out}")
     elif verdict == "WL" :
         print("This judge does not support this language yet!")
